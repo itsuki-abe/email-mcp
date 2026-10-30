@@ -16,6 +16,7 @@ export default function registerWatcherTools(
   server: McpServer,
   watcherService: WatcherService,
   hooksService: HooksService,
+  { readOnly = false }: { readOnly?: boolean } = {},
 ): void {
   const hooksConfig = hooksService.getHooksConfig();
   // -------------------------------------------------------------------------
@@ -230,6 +231,8 @@ export default function registerWatcherTools(
       };
     },
   );
+
+  if (readOnly) return;
 
   // -------------------------------------------------------------------------
   // test_notification — send a test notification

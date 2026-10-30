@@ -14,12 +14,14 @@ export default function registerAttachmentTools(
   mailReadService: MailReadService,
   imapService: ImapService,
   attachmentDownloadConfig: AttachmentDownloadConfig,
+  { readOnly = false }: { readOnly?: boolean } = {},
 ): void {
-  const downloadDirNote = attachmentDownloadConfig.dir
-    ? `Set saveToDownloadDir=true to also (or instead) write the file under the server-configured ` +
-      `download directory — allowed extensions: ${attachmentDownloadConfig.allowedExtensions.join(', ')}. ` +
-      `Optionally pass saveAs to choose the filename written there.`
-    : 'saveToDownloadDir is unavailable — no attachment download directory is configured on this server.';
+  const downloadDirNote =
+    !readOnly && attachmentDownloadConfig.dir
+      ? `Set saveToDownloadDir=true to also (or instead) write the file under the server-configured ` +
+        `download directory — allowed extensions: ${attachmentDownloadConfig.allowedExtensions.join(', ')}. ` +
+        `Optionally pass saveAs to choose the filename written there.`
+      : 'saveToDownloadDir is unavailable in read-only mode or without a configured download directory.';
 
   server.registerTool(
     'download_attachment',
@@ -41,8 +43,7 @@ export default function registerAttachmentTools(
           .string()
           .optional()
           .describe('MIME part id from get_email metadata (takes precedence over filename)'),
-        saveToDownloadDir: z
-          .boolean()
+        saveToDownloadDir: (readOnly ? z.literal(false) : z.boolean())
           .default(false)
           .describe(
             'Write the attachment to the server-configured download directory instead of ' +
@@ -60,6 +61,9 @@ export default function registerAttachmentTools(
     },
     async ({ account, id, mailbox, filename, partId, saveToDownloadDir, saveAs }) => {
       try {
+        if (readOnly && saveToDownloadDir) {
+          throw new Error('saveToDownloadDir=true is unavailable in read-only mode');
+        }
         if (filename === undefined && partId === undefined) {
           throw new Error('Provide filename or partId (see get_email attachment metadata)');
         }

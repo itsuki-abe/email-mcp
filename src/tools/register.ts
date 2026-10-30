@@ -57,8 +57,14 @@ export default function registerAllTools(server: McpServer, services: AppService
   // Read tools — always registered
   registerAccountsTools(server, connections);
   registerMailboxesTools(server, imapService);
-  registerEmailsTools(server, mailReadService, imapService);
-  registerAttachmentTools(server, mailReadService, imapService, config.settings.attachmentDownload);
+  registerEmailsTools(server, mailReadService, imapService, { readOnly });
+  registerAttachmentTools(
+    server,
+    mailReadService,
+    imapService,
+    config.settings.attachmentDownload,
+    { readOnly },
+  );
   registerContactsTools(server, imapService);
   registerThreadTools(server, mailReadService);
   registerTemplateReadTools(server, templateService);
@@ -68,25 +74,23 @@ export default function registerAllTools(server: McpServer, services: AppService
     calendarService,
     localCalendarService,
     remindersService,
-    { autoDownloadAttachments: config.settings.attachments.autoDownload },
+    { autoDownloadAttachments: config.settings.attachments.autoDownload, readOnly },
   );
   registerAnalyticsTools(server, imapService);
   registerHealthTools(server, connections, imapService, mailReadService, cacheStore, blobStore);
   registerLocateTools(server, mailReadService);
-  registerWatcherTools(server, watcherService, hooksService);
-  // Clipboard copy is a local convenience, not a mailbox write — registered
-  // in read-only mode too (same reasoning as test_notification).
-  registerVerificationTools(
-    server,
-    imapService,
-    config,
-    watcherService,
-    clipboardService,
-    verificationCatcher,
-  );
+  registerWatcherTools(server, watcherService, hooksService, { readOnly });
 
   // Write tools — skipped in read-only mode
   if (!readOnly) {
+    registerVerificationTools(
+      server,
+      imapService,
+      config,
+      watcherService,
+      clipboardService,
+      verificationCatcher,
+    );
     const globalMb = config.settings.send.maxAttachmentMb;
     registerSendTools(server, smtpService, {
       globalMb,

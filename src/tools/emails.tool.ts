@@ -55,6 +55,7 @@ export default function registerEmailsTools(
   server: McpServer,
   mailReadService: MailReadService,
   imapService: ImapService,
+  { readOnly = false }: { readOnly?: boolean } = {},
 ): void {
   // ---------------------------------------------------------------------------
   // list_emails
@@ -177,7 +178,9 @@ export default function registerEmailsTools(
         'format: text (default) = HTML converted to readable text with [markdown](links); ' +
         'stripped = text minus quoted replies and signatures; full = raw body part (HTML mail returns raw HTML). ' +
         `Body is capped at ${DEFAULT_SINGLE_BODY_MAX} chars by default — pass maxLength (0 = unlimited) to change. ` +
-        'Set markRead=true only when you want to explicitly mark the email as read. ' +
+        (readOnly
+          ? 'markRead=true is unavailable in read-only mode. '
+          : 'Set markRead=true only when you want to explicitly mark the email as read. ') +
         'A Bulk: line appears for list or machine-generated mail (📰 newsletter / 🤖 automated), ' +
         'derived from RFC headers, with the unsubscribe URI when the sender offers one.',
       inputSchema: z.object({
@@ -198,8 +201,7 @@ export default function registerEmailsTools(
           .describe(
             `Truncate body at this many characters (default ${DEFAULT_SINGLE_BODY_MAX}; 0 = unlimited). A hint shows how many characters remain.`,
           ),
-        markRead: z
-          .boolean()
+        markRead: (readOnly ? z.literal(false) : z.boolean())
           .default(false)
           .describe(
             'Explicitly mark the email as read after fetching (default: false — reading is non-destructive by default)',
@@ -209,6 +211,9 @@ export default function registerEmailsTools(
     },
     async ({ account, emailId, mailbox, format, maxLength, markRead }) => {
       try {
+        if (readOnly && markRead) {
+          throw new Error('markRead=true is unavailable in read-only mode');
+        }
         const email = await mailReadService.getEmail(account, emailId, mailbox);
 
         const parts: string[] = [

@@ -763,7 +763,7 @@ For single-account setups (overrides config file):
 | `MCP_EMAIL_SMTP_POOL_MAX_MESSAGES` | `100` | Max messages per pooled connection |
 | `MCP_EMAIL_RATE_LIMIT` | `10` | Max sends per minute |
 | `MCP_EMAIL_SEND_SAVE_TO_SENT` | `false` | `true` appends a copy of each sent message to the IMAP Sent folder |
-| `MCP_EMAIL_READ_ONLY` | `false` | `true` unregisters the mailbox-write tools (send, move, delete, labels, bulk). Calendar/Reminders writes, clipboard copy and config-writing tools stay available — it is a mailbox guard, not a global one. |
+| `MCP_EMAIL_READ_ONLY` | `false` | `true` registers only read tools. Calendar/Reminders writes, configuration changes, notifications, and clipboard tools are unavailable; `markRead=true` and `saveToDownloadDir=true` are rejected. Automatic hooks, verification catching, and scheduled sends do not start; the mail mirror still syncs. |
 | `MCP_EMAIL_SCHEDULER_SENT_RETENTION_DAYS` | `90` | Days of sent-email history to keep; `0` keeps everything |
 | `MCP_EMAIL_ATTACHMENT_DOWNLOAD_DIR` | — | Directory `download_attachment`'s `saveToDownloadDir` writes into; unset disables the option |
 | `MCP_EMAIL_ATTACHMENT_DOWNLOAD_ALLOWED_EXTENSIONS` | *(built-in list — see below)* | Comma-separated extension allowlist for saved attachments |

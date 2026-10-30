@@ -196,11 +196,17 @@ export function startBackgroundServices(
   let schedulerInterval: ReturnType<typeof setInterval> | undefined;
   let cacheInterval: ReturnType<typeof setInterval> | undefined;
 
-  hooksService.start(lowLevelServer);
-  verificationCatcher.start();
+  if (!config.settings.readOnly) {
+    hooksService.start(lowLevelServer);
+    verificationCatcher.start();
+  }
   syncEngine?.start();
 
-  if (config.settings.verification.enabled && !config.settings.watcher.enabled) {
+  if (
+    !config.settings.readOnly &&
+    config.settings.verification.enabled &&
+    !config.settings.watcher.enabled
+  ) {
     mcpLog(
       'info',
       'verification',
@@ -214,24 +220,26 @@ export function startBackgroundServices(
       await watcherService.start();
       await mcpLog('info', 'server', 'Email MCP background services started');
 
-      // Check for overdue scheduled emails on startup.
-      try {
-        const result = await schedulerService.checkAndSend();
-        if (result.sent > 0) {
-          await mcpLog('info', 'scheduler', `Sent ${result.sent} overdue email(s) on startup`);
-        }
-      } catch {
-        // Non-fatal: a scheduler check failure shouldn't prevent startup.
-      }
-
-      // Periodic scheduler check every 60 seconds.
-      schedulerInterval = setInterval(async () => {
+      if (!config.settings.readOnly) {
+        // Check for overdue scheduled emails on startup.
         try {
-          await schedulerService.checkAndSend();
+          const result = await schedulerService.checkAndSend();
+          if (result.sent > 0) {
+            await mcpLog('info', 'scheduler', `Sent ${result.sent} overdue email(s) on startup`);
+          }
         } catch {
-          // Silent — don't spam logs.
+          // Non-fatal: a scheduler check failure shouldn't prevent startup.
         }
-      }, 60_000);
+
+        // Periodic scheduler check every 60 seconds.
+        schedulerInterval = setInterval(async () => {
+          try {
+            await schedulerService.checkAndSend();
+          } catch {
+            // Silent — don't spam logs.
+          }
+        }, 60_000);
+      }
 
       // Reconcile the local mirror: once at startup, then on an interval.
       // syncMailbox never throws and never blocks a tool call, so this can

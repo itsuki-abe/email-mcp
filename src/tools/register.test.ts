@@ -138,8 +138,7 @@ describe('registerAllTools', () => {
     // Read tools should still be registered
     expect(registerAccountsTools).toHaveBeenCalled();
     expect(registerEmailsTools).toHaveBeenCalled();
-    // Clipboard copy is a local convenience, not a mailbox write
-    expect(registerVerificationTools).toHaveBeenCalled();
+    expect(registerVerificationTools).not.toHaveBeenCalled();
     // Write tools should NOT be registered
     expect(registerSendTools).not.toHaveBeenCalled();
     expect(registerManageTools).not.toHaveBeenCalled();
